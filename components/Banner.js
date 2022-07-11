@@ -1,11 +1,7 @@
-import React from 'react';
-import styles from './Banner.module.css';
+import React from "react";
+import styles from "./Banner.module.css";
 
-export default function Banner({ buttonText }) {
-  const handleClick = () => {
-    console.log('Banner button clicked!');
-  };
-
+export default function Banner({ buttonText, handleClick }) {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>
