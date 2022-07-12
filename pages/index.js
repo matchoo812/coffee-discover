@@ -1,5 +1,8 @@
+import { useContext, useEffect, useState } from "react";
+
 import useTrackedLocation from "../hooks/useTrackedLocation";
 import { fetchCoffeeShops } from "../lib/coffeeShops";
+import { ACTION_TYPES, StoreContext } from "../store/storeContext";
 
 import Banner from "../components/Banner";
 import Card from "../components/Card";
@@ -7,7 +10,6 @@ import Head from "next/head";
 import Image from "next/image";
 
 import styles from "../styles/Home.module.css";
-import { useEffect, useState } from "react";
 
 export async function getStaticProps() {
   const coffeeShops = await fetchCoffeeShops();
@@ -17,13 +19,16 @@ export async function getStaticProps() {
   };
 }
 
-export default function Home({ coffeeShops }) {
-  const { handleTrackLocation, isFindingLocation, latLong, locationErrorMessage } =
+export default function Home(props) {
+  const { handleTrackLocation, isFindingLocation, locationErrorMessage } =
     useTrackedLocation();
   // console.log({ latLong, locationErrorMessage });
 
-  const [coffeeShopsNearMe, setCoffeeShopsNearMe] = useState([]);
+  // const [coffeeShopsNearMe, setCoffeeShopsNearMe] = useState([]);
   const [coffeeShopsError, setCoffeeShopsError] = useState(null);
+
+  const { dispatch, state } = useContext(StoreContext);
+  const { coffeeShops, latLong } = state;
 
   useEffect(() => {
     const getCoffeeShopsByLocation = async () => {
@@ -31,8 +36,12 @@ export default function Home({ coffeeShops }) {
         try {
           // set coffee shops based on user's location
           const fetchedCoffeeShops = await fetchCoffeeShops(latLong, 30);
-          console.log({ fetchedCoffeeShops });
-          setCoffeeShopsNearMe(fetchedCoffeeShops);
+          // console.log({ fetchedCoffeeShops });
+          // setCoffeeShopsNearMe(fetchedCoffeeShops);
+          dispatch({
+            type: ACTION_TYPES.SET_COFFEE_SHOPS,
+            payload: { coffeeShops: fetchedCoffeeShops },
+          });
         } catch (error) {
           // console.log({ error });
           setCoffeeShopsError(error.message);
@@ -40,7 +49,7 @@ export default function Home({ coffeeShops }) {
       }
     };
     getCoffeeShopsByLocation();
-  }, [latLong]);
+  }, [dispatch, latLong]);
 
   const handleBannerButtonClick = () => {
     handleTrackLocation();
@@ -70,12 +79,12 @@ export default function Home({ coffeeShops }) {
           <Image src='/static/hero-image.png' alt='' width={700} height={400} />
         </div>
 
-        {coffeeShopsNearMe.length > 0 && (
+        {coffeeShops.length > 0 && (
           <div className={sectionWrapper}>
             <h2 className={heading2}>Coffee Shops Near Me</h2>
 
             <div className={cardLayout}>
-              {coffeeShopsNearMe.map(shop => (
+              {coffeeShops.map(shop => (
                 <Card
                   key={shop.id}
                   shopId={shop.id}
@@ -91,12 +100,12 @@ export default function Home({ coffeeShops }) {
           </div>
         )}
 
-        {coffeeShops.length > 0 && (
+        {coffeeShops.length === 0 && props.coffeeShops.length > 0 && (
           <div className={sectionWrapper}>
             <h2 className={heading2}>Akron Coffee Shops</h2>
 
             <div className={cardLayout}>
-              {coffeeShops.map(shop => (
+              {props.coffeeShops.map(shop => (
                 <Card
                   key={shop.id}
                   shopId={shop.id}

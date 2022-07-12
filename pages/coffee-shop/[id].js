@@ -1,10 +1,14 @@
-import React from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { fetchCoffeeShops } from "../../lib/coffeeShops";
+import { isEmpty } from "../../utils";
+import { StoreContext } from "../../store/storeContext";
+
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+
 import styles from "../../styles/CoffeeShopPage.module.css";
-import { fetchCoffeeShops } from "../../lib/coffeeShops";
 
 export async function getStaticProps({ params }) {
   // console.log("Params: ", params)
@@ -29,15 +33,34 @@ export async function getStaticPaths() {
   return { paths, fallback: true };
 }
 
-export default function CoffeeShopPage({ coffeeShop }) {
-  const router = useRouter();
-  const { query } = router;
+export default function CoffeeShopPage(initialProps) {
+  // console.log(initialProps.coffeeShop);
 
+  const router = useRouter();
   if (router.isFallback) {
     return <div>Loading...</div>;
   }
+  const { id } = router.query;
+  const [coffeeShop, setCoffeeShop] = useState(initialProps.coffeeShop);
+  // console.log(coffeeShop);
 
-  console.log(coffeeShop);
+  const {
+    state: { coffeeShops },
+  } = useContext(StoreContext);
+
+  useEffect(() => {
+    // check if original coffee shops array is empty
+    if (isEmpty(initialProps.coffeeShop)) {
+      // check coffee shops from context and find the one that matches the id from query params
+      if (coffeeShops.length > 0) {
+        const findCoffeeShopById = coffeeShops.find(coffeeShop => {
+          return coffeeShop.id.toString() === id;
+        });
+        setCoffeeShop(findCoffeeShopById);
+      }
+    }
+  }, [coffeeShops, id, initialProps.coffeeShop]);
+
   const { name, address, neighborhood, imgUrl } = coffeeShop;
   let votes = 1;
 
