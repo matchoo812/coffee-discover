@@ -14,10 +14,13 @@
 .heroImage {
   position: absolute;
   top: 0;
-  z-index: 1;
+  right: 0;
+  z-index: 0;
+  transform: scale(0.7, 0.7);
 }
 
 .cardLayout {
+  margin-top: 2rem;
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   column-gap: 1.5rem;
@@ -34,6 +37,7 @@
   padding-bottom: 2rem;
   margin-top: 2rem;
   color: var(--text-white-100);
+  z-index: 3;
 }
 
 .sectionWrapper {
@@ -75,7 +79,7 @@
   }
 
   .heroImage {
-    right: 20%;
+    transform: scale(0.8, 0.8);
   }
 
   .cardLayout {
@@ -94,7 +98,9 @@
     padding-right: 2rem /* 32px */;
   }
   .heroImage {
-    right: 20%;
+    top: 1rem;
+    right: 10%;
+    transform: scale(0.9, 0.9);
   }
   .cardLayout {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -107,5 +113,10 @@
   }
   .cardLayout {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .heroImage {
+    top: 2rem;
+    right: 15%;
+    transform: scale(1, 1);
   }
 }

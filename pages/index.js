@@ -12,6 +12,7 @@ import Image from "next/image";
 import styles from "../styles/Home.module.css";
 
 export async function getStaticProps() {
+  // note: call library function directly; don't use API in getStaticProps, as it won't be reachable until app is loaded
   const coffeeShops = await fetchCoffeeShops();
 
   return {
@@ -35,12 +36,17 @@ export default function Home(props) {
       if (latLong) {
         try {
           // set coffee shops based on user's location
-          const fetchedCoffeeShops = await fetchCoffeeShops(latLong, 30);
+          const response = await fetch(
+            `/api/getCoffeeShopsByLocation?latLong=${latLong}&limit=30`
+          );
           // console.log({ fetchedCoffeeShops });
           // setCoffeeShopsNearMe(fetchedCoffeeShops);
+          const coffeeShops = await response.json();
+          setCoffeeShopsError("");
+
           dispatch({
             type: ACTION_TYPES.SET_COFFEE_SHOPS,
-            payload: { coffeeShops: fetchedCoffeeShops },
+            payload: { coffeeShops },
           });
         } catch (error) {
           // console.log({ error });
@@ -76,7 +82,9 @@ export default function Home(props) {
         <p>{coffeeShopsError && `Something went wrong: ${coffeeShopsError}`}</p>
 
         <div className={heroImage}>
-          <Image src='/static/hero-image.png' alt='' width={700} height={400} />
+          <Image src='/static/beans.png' alt='' width={500} height={500} />
+          {/* icon attribution */}
+          {/* <a href="https://www.flaticon.com/free-icons/coffee" title="coffee icons">Coffee icons created by Smashicons - Flaticon</a> */}
         </div>
 
         {coffeeShops.length > 0 && (
@@ -102,7 +110,7 @@ export default function Home(props) {
 
         {coffeeShops.length === 0 && props.coffeeShops.length > 0 && (
           <div className={sectionWrapper}>
-            <h2 className={heading2}>Akron Coffee Shops</h2>
+            <h2 className={heading2}>Busan Coffee Shops</h2>
 
             <div className={cardLayout}>
               {props.coffeeShops.map(shop => (
