@@ -1,15 +1,7 @@
-import { Record } from "airtable";
-
-const Airtable = require("airtable");
-const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
-  process.env.AIRTABLE_BASE_ID
-);
-
-const table = base("coffee-shops");
-// console.log(table);
+import { table, getShopRecords } from "../../lib/airtable";
 
 const createCoffeeShop = async (req, res) => {
-  console.log({ req });
+  // console.log({ req });
 
   if (req.method === "POST") {
     // find record
@@ -20,16 +12,13 @@ const createCoffeeShop = async (req, res) => {
         // locate record of coffee shop if it exists
         const findCoffeeShopInfo = await table
           .select({
-            filterByFormula: `id=${id}`,
+            // add quotes around value to make it a string instead of a number
+            filterByFormula: `id="${id}"`,
           })
           .firstPage();
 
         if (findCoffeeShopInfo.length !== 0) {
-          const shopRecords = findCoffeeShopInfo.map(shop => {
-            return {
-              ...shop.fields,
-            };
-          });
+          const shopRecords = getShopRecords(findCoffeeShopInfo);
           res.json(shopRecords);
         } else {
           // create a record if it doesn't exist
@@ -47,11 +36,7 @@ const createCoffeeShop = async (req, res) => {
               },
             ]);
 
-            const shopRecords = createRecords.map(shop => {
-              return {
-                ...shop.fields,
-              };
-            });
+            const shopRecords = getShopRecords(createRecords);
             res.json({ message: "record created!", records: shopRecords });
           } else {
             res.status(400);

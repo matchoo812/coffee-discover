@@ -34,12 +34,7 @@ export async function getStaticPaths() {
 }
 
 export default function CoffeeShopPage(initialProps) {
-  // console.log(initialProps.coffeeShop);
-
   const router = useRouter();
-  if (router.isFallback) {
-    return <div>Loading...</div>;
-  }
   const { id } = router.query;
   const [coffeeShop, setCoffeeShop] = useState(initialProps.coffeeShop);
   // console.log(coffeeShop);
@@ -48,24 +43,57 @@ export default function CoffeeShopPage(initialProps) {
     state: { coffeeShops },
   } = useContext(StoreContext);
 
+  const handleCreateCoffeeShop = async coffeeShop => {
+    try {
+      const { name, id, votes, imgUrl, neighborhood, address } = coffeeShop;
+      const response = await fetch("/api/createCoffeeShop", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          id,
+          votes: 0,
+          imgUrl,
+          neighborhood: neighborhood || "",
+          address: address || "",
+        }),
+      });
+
+      const dbCoffeeShop = response.json();
+      console.log(dbCoffeeShop);
+    } catch (error) {
+      console.error("There was a problem creating coffee shop: ", error);
+    }
+  };
+
   useEffect(() => {
     // check if original coffee shops array is empty
     if (isEmpty(initialProps.coffeeShop)) {
       // check coffee shops from context and find the one that matches the id from query params
       if (coffeeShops.length > 0) {
-        const findCoffeeShopById = coffeeShops.find(coffeeShop => {
+        const coffeeShopFromContext = coffeeShops.find(coffeeShop => {
           return coffeeShop.id.toString() === id;
         });
-        setCoffeeShop(findCoffeeShopById);
+
+        if (coffeeShopFromContext) {
+          setCoffeeShop(coffeeShopFromContext);
+          handleCreateCoffeeShop(coffeeShopFromContext);
+        }
       }
+    } else {
+      // add static coffee shop to airtable to persist votes
+      handleCreateCoffeeShop(initialProps.coffeeShop);
     }
-  }, [coffeeShops, id, initialProps.coffeeShop]);
+  }, [coffeeShops, id, initialProps, initialProps.coffeeShop]);
 
   const { name, address, neighborhood, imgUrl } = coffeeShop;
-  let votes = 1;
+  const [voteCount, setVoteCount] = useState(0);
 
-  const handleUpvote = e => {
-    console.log(e);
+  const handleUpvote = () => {
+    let count = voteCount + 1;
+    setVoteCount(count);
   };
 
   const {
@@ -81,7 +109,9 @@ export default function CoffeeShopPage(initialProps) {
     text,
     upvoteButton,
   } = styles;
-  return (
+  return router.isFallback ? (
+    <div>Loading...</div>
+  ) : (
     <div className={layout}>
       <Head>
         <title>{name}</title>
@@ -126,7 +156,7 @@ export default function CoffeeShopPage(initialProps) {
           )}
           <div className={iconWrapper}>
             <Image src='/static/icons/star.svg' width={24} height={24} alt='' />
-            <p className={text}>{votes}</p>
+            <p className={text}>{voteCount}</p>
           </div>
 
           <button className={upvoteButton} onClick={handleUpvote}>
