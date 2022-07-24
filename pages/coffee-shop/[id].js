@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import useSWR from "swr";
 import { fetchCoffeeShops } from "../../lib/coffeeShops";
 import { isEmpty } from "../../utils";
 import { StoreContext } from "../../store/storeContext";
@@ -45,7 +46,7 @@ export default function CoffeeShopPage(initialProps) {
 
   const handleCreateCoffeeShop = async coffeeShop => {
     try {
-      const { name, id, votes, imgUrl, neighborhood, address } = coffeeShop;
+      const { name, id, votes = 0, imgUrl, neighborhood, address } = coffeeShop;
       const response = await fetch("/api/createCoffeeShop", {
         method: "POST",
         headers: {
@@ -54,15 +55,15 @@ export default function CoffeeShopPage(initialProps) {
         body: JSON.stringify({
           name,
           id,
-          votes: 0,
+          votes,
           imgUrl,
           neighborhood: neighborhood || "",
           address: address || "",
         }),
       });
 
-      const dbCoffeeShop = response.json();
-      console.log(dbCoffeeShop);
+      const dbCoffeeShop = await response.json();
+      // console.log({ dbCoffeeShop });
     } catch (error) {
       console.error("There was a problem creating coffee shop: ", error);
     }
@@ -91,10 +92,41 @@ export default function CoffeeShopPage(initialProps) {
   const { name, address, neighborhood, imgUrl } = coffeeShop;
   const [voteCount, setVoteCount] = useState(0);
 
-  const handleUpvote = () => {
-    let count = voteCount + 1;
-    setVoteCount(count);
+  const fetcher = url => fetch(url).then(res => res.json());
+  const { data, error } = useSWR(`/api/coffeeShop/${id}`, fetcher);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      // console.log(`Data from SWR: ${data[0]}`);
+      setCoffeeShop(data[0]);
+      setVoteCount(data[0].votes);
+    }
+  }, [data]);
+
+  const handleUpvote = async () => {
+    try {
+      const response = await fetch("/api/upvoteById", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+        }),
+      });
+
+      const dbCoffeeShop = await response.json();
+      // console.log({ dbCoffeeShop });
+      if (dbCoffeeShop && dbCoffeeShop.length > 0) {
+        let count = voteCount + 1;
+        setVoteCount(count);
+      }
+    } catch (error) {
+      console.error("There was a problem updating coffee shop: ", error);
+    }
   };
+
+  error && <div>Something went wrong retrieving coffee shop page</div>;
 
   const {
     col1,
@@ -109,6 +141,7 @@ export default function CoffeeShopPage(initialProps) {
     text,
     upvoteButton,
   } = styles;
+
   return router.isFallback ? (
     <div>Loading...</div>
   ) : (
